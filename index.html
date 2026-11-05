@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Secret Santa 422</title>
+  <title>Secret Santa</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎅</text></svg>">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,7 +12,7 @@
   <div class="snow" aria-hidden="true"></div>
   <header>
     <h1>🎅 Secret Santa</h1>
-    <p id="section-name">Section 422</p>
+    <p id="section-name">Entre ton mot de passe pour découvrir ta personne</p>
   </header>
 
   <main>
@@ -20,11 +20,7 @@
     <section id="login-card" class="card">
       <h2>Connexion</h2>
       <form id="login-form" autocomplete="on">
-        <label for="who">Qui es-tu ?</label>
-        <select id="who">
-          <option value="">Chargement…</option>
-        </select>
-        <label for="password">Mot de passe</label>
+        <label for="password">Ton mot de passe</label>
         <input id="password" type="password" autocomplete="current-password" required placeholder="8 caractères" maxlength="32">
         <button class="btn full" type="submit" id="login-btn">Voir mon tirage 🎁</button>
       </form>
@@ -53,6 +49,6 @@
 
   <footer>Chaque résultat est chiffré avec le mot de passe de son propriétaire.</footer>
 
-  <script type="module" src="js/app.js?v=6"></script>
+  <script type="module" src="js/app.js?v=7"></script>
 </body>
 </html>
