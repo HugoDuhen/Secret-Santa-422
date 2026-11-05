@@ -1,12 +1,8 @@
 // Construction du fichier public data/data.json + du LOGINS.md (partagé navigateur + Node)
 import { encryptJSON } from './crypto.js';
 
-const WORDS = [
-  'sapin', 'renne', 'neige', 'etoile', 'flocon', 'lutin', 'cadeau', 'houx', 'bougie', 'cannelle',
-  'traineau', 'givre', 'boule', 'grelot', 'chocolat', 'biscuit', 'hiver', 'luge', 'ruban', 'gui',
-  'marron', 'clochette', 'chaussette', 'cheminee', 'paquet', 'manteau', 'echarpe', 'bonnet', 'igloo', 'pingouin',
-  'ours', 'glacon', 'nougat', 'orange', 'papillote', 'sucre', 'vin', 'buche', 'bonbon', 'veillee',
-];
+// Sans caractères ambigus (0/o, 1/l/i) ; les mots de passe sont insensibles à la casse
+const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 
 function randInt(max) {
   const buf = new Uint32Array(1);
@@ -14,16 +10,15 @@ function randInt(max) {
   return buf[0] % max;
 }
 
-export function generatePassword(words = 2) {
-  const parts = [];
-  for (let i = 0; i < words; i++) parts.push(WORDS[randInt(WORDS.length)]);
-  parts.push(String(randInt(10000)).padStart(4, '0'));
-  return parts.join('-');
+export function generatePassword(length = 8) {
+  let out = '';
+  for (let i = 0; i < length; i++) out += ALPHABET[randInt(ALPHABET.length)];
+  return out;
 }
 
 export function slugify(name) {
   return String(name)
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toLowerCase().trim()
     .replace(/[^a-z0-9]+/g, '.')
     .replace(/^\.+|\.+$/g, '') || 'participant';
@@ -69,9 +64,9 @@ export function buildLoginsMarkdown(state, adminPassword, siteUrl = '') {
     .filter((p) => p.role === role)
     .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   const table = (list) => [
-    '| Nom | Identifiant | Mot de passe |',
-    '|---|---|---|',
-    ...list.map((p) => `| ${p.name} | \`${p.id}\` | \`${p.password}\` |`),
+    '| Nom (à choisir dans la liste) | Mot de passe |',
+    '|---|---|',
+    ...list.map((p) => `| ${p.name} | \`${p.password}\` |`),
   ].join('\n');
 
   const others = state.participants.filter((p) => p.role !== 'élève' && p.role !== 'cadre');

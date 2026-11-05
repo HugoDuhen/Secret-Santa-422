@@ -25,7 +25,7 @@ Sans le bon mot de passe, personne ne peut lire le tirage, même en fouillant le
    ```
    (une exclusion est dans les deux sens ; ajoute `true` en 3e élément pour un sens unique)
 2. `node scripts/generate.mjs https://<ton-user>.github.io/Secret-Santa-422/`
-   → génère les mots de passe, fait le tirage, écrit `data/data.json` et `LOGINS.md`.
+   → génère les mots de passe (8 caractères aléatoires), fait le tirage, écrit `data/data.json` et `LOGINS.md`.
    ⚠️ Relancer cette commande **régénère tous les mots de passe**. Ensuite, passe plutôt par l'admin.
 3. Commit + push de `data/data.json`.
 4. Sur GitHub : *Settings → Pages → Source : Deploy from a branch → `main` / `(root)`*.
