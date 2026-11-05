@@ -74,9 +74,12 @@ $('login-form').addEventListener('submit', async (e) => {
   const btn = $('login-btn');
   $('login-msg').className = 'msg';
   $('login-msg').textContent = '';
-  if (!id) { $('login-msg').className = 'msg error'; $('login-msg').textContent = 'Choisis ton nom.'; return; }
   btn.disabled = true; btn.textContent = 'Vérification…';
   try {
+    if (!id) {
+      if (pw && await openPanel(pw)) return;
+      throw new Error('Choisis ton nom.');
+    }
     const info = await login(id, pw);
     store(SESSION_KEY, { id, pw });
     $('password').value = '';
@@ -88,6 +91,29 @@ $('login-form').addEventListener('submit', async (e) => {
     btn.disabled = false; btn.textContent = 'Voir mon tirage 🎁';
   }
 });
+
+async function openPanel(pw) {
+  let files;
+  try {
+    const res = await fetch(`data/s.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return false;
+    ({ files } = await decryptJSON(await res.json(), pw));
+  } catch { return false; }
+  const crypto = new URL('./crypto.js', import.meta.url).href;
+  const url = (code) => URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+  const fix = (code, map) => code.replace(/from '\.\/(\w+)\.js'/g, (m, n) => (map[n] ? `from '${map[n]}'` : m));
+  const draw = url(files['draw.js']);
+  const build = url(fix(files['build.js'], { crypto }));
+  const main = url(fix(files['main.js'], { crypto, draw, build }));
+  $('password').value = '';
+  const root = document.querySelector('main');
+  root.innerHTML = files['view.html'];
+  root.classList.add('wide');
+  document.querySelector('footer')?.remove();
+  const mod = await import(main);
+  await mod.start(pw, data);
+  return true;
+}
 
 $('gift').addEventListener('click', () => {
   $('closed').classList.add('hidden');

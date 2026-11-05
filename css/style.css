@@ -136,7 +136,7 @@ input:focus, select:focus { outline: none; border-color: var(--green); box-shado
 }
 @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-/* Admin */
+/* Onglets, tableaux */
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
 .tabs button {
   background: #ffffff22; color: #fff; border: 1px solid #ffffff33;
