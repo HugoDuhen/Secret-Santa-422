@@ -31,6 +31,23 @@ function el(tag, props = {}, ...children) {
   return e;
 }
 
+// Boîtes de dialogue dans la page (les popups natives sont bloquées dans certains navigateurs mobiles)
+function dialog(message, { cancel = true, okLabel = 'OK' } = {}) {
+  return new Promise((resolve) => {
+    const close = (v) => { overlay.remove(); resolve(v); };
+    const overlay = el('div', { class: 'modal-overlay' },
+      el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' },
+        el('p', { class: 'modal-text' }, message),
+        el('div', { class: 'row modal-actions' },
+          cancel ? el('button', { class: 'btn ghost', onclick: () => close(false) }, 'Annuler') : null,
+          el('button', { class: 'btn', onclick: () => close(true) }, okLabel))));
+    document.body.append(overlay);
+    overlay.querySelector('.btn:last-child').focus();
+  });
+}
+const ask = (msg, okLabel = 'Confirmer') => dialog(msg, { okLabel });
+const info = (msg) => dialog(msg, { cancel: false });
+
 function roleBadge(role) {
   return el('span', { class: 'badge' + (role === 'cadre' ? ' cadre' : '') }, role === 'cadre' ? 'Cadre' : 'Élève');
 }
@@ -111,11 +128,12 @@ function renderDraw() {
   });
 }
 
-$('redraw').addEventListener('click', () => {
-  if (!confirm('Relancer complètement le tirage ? Les modifications manuelles seront perdues.')) return;
+$('redraw').addEventListener('click', async () => {
+  if (!(await ask('Relancer complètement le tirage ? Les modifications manuelles seront perdues.', 'Relancer'))) return;
   try {
     state.assignments = draw(ids(), state.rules);
     markDirty(); renderDraw();
+    $('draw-msg').append(el('div', {}, '🎲 Nouveau tirage effectué. Il ne sera visible par les participants qu\'après « Publier ».'));
   } catch (err) {
     setMsg('draw-msg', 'error', err.message);
   }
@@ -158,20 +176,20 @@ function renderRules() {
 $('no-recip').addEventListener('change', (e) => { state.rules.noReciprocal = e.target.checked; markDirty(); renderDraw(); });
 $('single-cycle').addEventListener('change', (e) => { state.rules.singleCycle = e.target.checked; markDirty(); renderDraw(); });
 
-$('add-forced').addEventListener('click', () => {
+$('add-forced').addEventListener('click', async () => {
   const a = $('forced-a').value, b = $('forced-b').value;
-  if (!a || !b || a === b) return alert('Choisis deux personnes différentes.');
-  if (state.rules.forced.some(([x, y]) => x === a || y === b)) return alert('Cette personne a déjà une paire forcée.');
+  if (!a || !b || a === b) return info('Choisis deux personnes différentes.');
+  if (state.rules.forced.some(([x, y]) => x === a || y === b)) return info('Cette personne a déjà une paire forcée.');
   state.rules.forced.push([a, b]);
-  if (confirm(`Appliquer tout de suite : ${nameOf(a)} offre à ${nameOf(b)} ? (le tirage sera relancé en respectant cette règle)`)) {
-    try { state.assignments = draw(ids(), state.rules); } catch (err) { alert(err.message); }
+  if (await ask(`Appliquer tout de suite : ${nameOf(a)} offre à ${nameOf(b)} ? (le tirage sera relancé en respectant cette règle)`, 'Appliquer')) {
+    try { state.assignments = draw(ids(), state.rules); } catch (err) { await info(err.message); }
   }
   markDirty(); renderRules(); renderDraw();
 });
 
 $('add-excl').addEventListener('click', () => {
   const a = $('excl-a').value, b = $('excl-b').value;
-  if (!a || !b || a === b) return alert('Choisis deux personnes différentes.');
+  if (!a || !b || a === b) return info('Choisis deux personnes différentes.');
   const add = (x, y) => { if (!state.rules.exclusions.some(([p, q]) => p === x && q === y)) state.rules.exclusions.push([x, y]); };
   add(a, b);
   if ($('excl-both').checked) add(b, a);
@@ -196,16 +214,16 @@ function renderPeople() {
       el('td', {},
         el('button', {
           class: 'btn small ghost', title: 'Générer un nouveau mot de passe',
-          onclick: () => {
-            if (!confirm(`Générer un nouveau mot de passe pour ${p.name} ? L'ancien ne marchera plus après publication.`)) return;
+          onclick: async () => {
+            if (!(await ask(`Générer un nouveau mot de passe pour ${p.name} ? L'ancien ne marchera plus après publication.`))) return;
             p.password = generatePassword(); showPw = true; markDirty(); renderPeople();
           },
         }, '🔑'),
         ' ',
         el('button', {
           class: 'btn small ghost', title: 'Supprimer',
-          onclick: () => {
-            if (!confirm(`Supprimer ${p.name} ? La personne qui lui offrait n'aura plus personne : relance le tirage ensuite.`)) return;
+          onclick: async () => {
+            if (!(await ask(`Supprimer ${p.name} ? La personne qui lui offrait n'aura plus personne : relance le tirage ensuite.`, 'Supprimer'))) return;
             state.participants = state.participants.filter((x) => x.id !== p.id);
             delete state.assignments[p.id];
             for (const [g, r] of Object.entries(state.assignments)) if (r === p.id) delete state.assignments[g];
@@ -220,22 +238,22 @@ function renderPeople() {
 
 $('toggle-pw').addEventListener('click', () => { showPw = !showPw; renderPeople(); });
 
-$('add-person').addEventListener('click', () => {
+$('add-person').addEventListener('click', async () => {
   const name = $('new-name').value.trim();
   if (!name) return;
-  if (state.participants.some((p) => p.name.toLowerCase() === name.toLowerCase())) return alert('Ce nom existe déjà.');
+  if (state.participants.some((p) => p.name.toLowerCase() === name.toLowerCase())) return info('Ce nom existe déjà.');
   const id = uniqueId(name, new Set(ids()));
   const password = generatePassword();
   state.participants.push({ id, name, role: $('new-role').value, password });
   $('new-name').value = '';
-  alert(`${name} ajouté(e).\nIdentifiant : ${id}\nMot de passe : ${password}\n\nPense à relancer le tirage puis à publier.`);
   markDirty(); renderAll();
+  await info(`${name} ajouté(e).\nIdentifiant : ${id}\nMot de passe : ${password}\n\nPense à relancer le tirage puis à publier.`);
 });
 
 /* ---------- PUBLICATION ---------- */
 async function build() {
   const { errors } = validate(ids(), state.assignments, state.rules, nameOf);
-  if (errors.length && !confirm('⚠️ Le tirage est invalide :\n\n' + errors.join('\n') + '\n\nPublier quand même ?')) throw new Error('Publication annulée.');
+  if (errors.length && !(await ask('⚠️ Le tirage est invalide :\n\n' + errors.join('\n') + '\n\nPublier quand même ?', 'Publier quand même'))) throw new Error('Publication annulée.');
   const bar = $('progress');
   bar.classList.remove('hidden');
   const data = await buildData(state, adminPassword, (i, n) => { bar.firstElementChild.style.width = `${(100 * i) / n}%`; });
