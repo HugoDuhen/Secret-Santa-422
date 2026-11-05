@@ -43,7 +43,7 @@ const assignments = draw(allIds, rules);
 const check = validate(allIds, assignments, rules);
 if (check.errors.length) throw new Error(check.errors.join('\n'));
 
-const adminPassword = generatePassword(3);
+const adminPassword = generatePassword(12);
 const state = { section: cfg.section, participants, rules, assignments };
 
 const data = await buildData(state, adminPassword);
