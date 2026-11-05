@@ -1,3 +1,5 @@
-LOGINS.md
+/*.md
+!/README.md
+.local/
 node_modules/
 .DS_Store
