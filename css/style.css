@@ -189,3 +189,6 @@ footer a { color: #cfe3d8; }
 .modal-text { margin: 0 0 16px; white-space: pre-line; line-height: 1.45; }
 .modal-actions { justify-content: flex-end; }
 .modal-actions > .btn { flex: 0 0 auto; }
+
+label.row { flex-wrap: nowrap; align-items: center; }
+label.row > span { flex: 1 1 auto; }
