@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Secret Santa 422</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎅</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="snow" aria-hidden="true"></div>
+  <header>
+    <h1>🎅 Secret Santa</h1>
+    <p id="section-name">Section 422</p>
+  </header>
+
+  <main>
+    <!-- Connexion -->
+    <section id="login-card" class="card">
+      <h2>Connexion</h2>
+      <form id="login-form" autocomplete="on">
+        <label for="who">Qui es-tu ?</label>
+        <select id="who" required>
+          <option value="">Chargement…</option>
+        </select>
+        <label for="password">Mot de passe</label>
+        <input id="password" type="password" autocomplete="current-password" required placeholder="ex : sapin-renne-1234">
+        <button class="btn full" type="submit" id="login-btn">Voir mon tirage 🎁</button>
+      </form>
+      <div id="login-msg" class="msg" role="alert"></div>
+    </section>
+
+    <!-- Résultat -->
+    <section id="result-card" class="card hidden">
+      <div class="reveal">
+        <p class="muted" id="hello"></p>
+        <div id="closed">
+          <button class="gift" id="gift" aria-label="Ouvrir le cadeau">🎁</button>
+          <p class="muted">Clique sur le cadeau pour découvrir ta personne</p>
+        </div>
+        <div id="opened" class="hidden">
+          <p>Tu offres un cadeau à :</p>
+          <div class="target" id="target"></div>
+          <p id="target-role"></p>
+          <p class="muted">🤫 Chut, c'est secret !</p>
+        </div>
+        <div id="no-draw" class="msg warn hidden">Le tirage n'a pas encore été fait. Reviens plus tard !</div>
+      </div>
+      <button class="btn ghost full" id="logout">Se déconnecter</button>
+    </section>
+  </main>
+
+  <footer>Chaque résultat est chiffré avec le mot de passe de son propriétaire. · <a href="admin.html">Admin</a></footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "name": "secret-santa-422",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node scripts/generate.mjs"
+  }
+}

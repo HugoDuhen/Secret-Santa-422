@@ -1,0 +1,20 @@
+{
+  "section": "Section 422",
+  "cadres": [
+    "Cadre 1 (à remplacer)",
+    "Cadre 2 (à remplacer)"
+  ],
+  "eleves": [
+    "Élève 1 (à remplacer)",
+    "Élève 2 (à remplacer)",
+    "Élève 3 (à remplacer)",
+    "Élève 4 (à remplacer)",
+    "Élève 5 (à remplacer)",
+    "Élève 6 (à remplacer)"
+  ],
+  "regles": {
+    "pasDeReciprocite": true,
+    "exclusions": [],
+    "pairesForcees": []
+  }
+}
