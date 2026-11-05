@@ -173,3 +173,19 @@ footer a { color: #cfe3d8; }
   .card { padding: 18px; }
   td select { min-width: 130px; }
 }
+
+/* Boîte de dialogue */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0, 0, 0, .55);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.modal {
+  background: var(--card); color: var(--ink);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  border-top: 5px solid var(--red);
+  padding: 20px; width: 100%; max-width: 420px;
+}
+.modal-text { margin: 0 0 16px; white-space: pre-line; line-height: 1.45; }
+.modal-actions { justify-content: flex-end; }
+.modal-actions > .btn { flex: 0 0 auto; }
