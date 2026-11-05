@@ -35,6 +35,7 @@
   ],
   "regles": {
     "pasDeReciprocite": true,
+    "uneSeuleBoucle": true,
     "exclusions": [],
     "pairesForcees": []
   }

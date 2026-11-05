@@ -16,7 +16,8 @@ function prepare(ids, rules = {}) {
   const excl = new Set();
   for (const [a, b] of rules.exclusions || []) excl.add(a + '>' + b);
   const noRecip = !!rules.noReciprocal && ids.length > 2;
-  return { forced, excl, noRecip };
+  const single = !!rules.singleCycle;
+  return { forced, excl, noRecip, single };
 }
 
 /**
@@ -24,12 +25,14 @@ function prepare(ids, rules = {}) {
  */
 export function draw(ids, rules = {}, rng = Math.random) {
   if (ids.length < 2) throw new Error('Il faut au moins 2 participants.');
-  const { forced, excl, noRecip } = prepare(ids, rules);
+  const { forced, excl, noRecip, single } = prepare(ids, rules);
 
   const forcedTargets = [...forced.values()];
   if (new Set(forcedTargets).size !== forcedTargets.length)
     throw new Error('Deux paires forcées visent la même personne.');
   for (const [g, r] of forced) if (g === r) throw new Error('Une paire forcée relie une personne à elle-même.');
+
+  if (single) return drawSingleCycle(ids, forced, excl, rng);
 
   for (let attempt = 0; attempt < 300; attempt++) {
     // Les personnes avec paire forcée d'abord, puis le reste dans un ordre aléatoire
@@ -71,13 +74,48 @@ export function draw(ids, rules = {}, rng = Math.random) {
   throw new Error('Aucun tirage possible avec ces règles. Retire une exclusion ou une paire forcée.');
 }
 
+// Une seule grande boucle : on construit une chaîne A → B → C → … → A
+function drawSingleCycle(ids, forced, excl, rng) {
+  const ok = (g, r) => g !== r && !excl.has(g + '>' + r) && (!forced.has(g) || forced.get(g) === r);
+  const forcedTargets = new Set(forced.values());
+
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const start = ids[Math.floor(rng() * ids.length)];
+    const path = [start];
+    const used = new Set(path);
+    let steps = 0;
+
+    const dfs = () => {
+      if (++steps > 50000) return false;
+      const g = path[path.length - 1];
+      if (path.length === ids.length) return ok(g, start);
+      const candidates = forced.has(g) ? [forced.get(g)] : shuffle(ids, rng);
+      for (const r of candidates) {
+        if (used.has(r) || !ok(g, r)) continue;
+        // une cible forcée ne peut être atteinte que par son offreur imposé
+        if (forcedTargets.has(r) && !(forced.has(g) && forced.get(g) === r)) continue;
+        path.push(r); used.add(r);
+        if (dfs()) return true;
+        path.pop(); used.delete(r);
+      }
+      return false;
+    };
+
+    if (forcedTargets.has(start) || !dfs()) continue;
+    const out = {};
+    path.forEach((g, i) => { out[g] = path[(i + 1) % path.length]; });
+    return out;
+  }
+  throw new Error('Impossible de faire une seule boucle avec ces règles. Retire une exclusion ou une paire forcée.');
+}
+
 /**
  * Vérifie un tirage. Renvoie { errors: [], warnings: [] } (messages en texte).
  */
 export function validate(ids, assignments, rules = {}, nameOf = (id) => id) {
   const errors = [];
   const warnings = [];
-  const { forced, excl, noRecip } = prepare(ids, rules);
+  const { forced, excl, noRecip, single } = prepare(ids, rules);
   const received = new Map();
 
   for (const g of ids) {
@@ -94,6 +132,10 @@ export function validate(ids, assignments, rules = {}, nameOf = (id) => id) {
     const n = received.get(id) || 0;
     if (n === 0) errors.push(`${nameOf(id)} ne reçoit aucun cadeau.`);
     if (n > 1) errors.push(`${nameOf(id)} reçoit ${n} cadeaux.`);
+  }
+  if (single && !errors.length) {
+    const n = cycles(ids, assignments).length;
+    if (n > 1) warnings.push(`Le tirage forme ${n} boucles au lieu d'une seule.`);
   }
   return { errors, warnings };
 }

@@ -19,6 +19,7 @@ Sans le bon mot de passe, personne ne peut lire le tirage, même en fouillant le
    ```json
    "regles": {
      "pasDeReciprocite": true,
+     "uneSeuleBoucle": true,
      "exclusions": [["Prénom A", "Prénom B"]],
      "pairesForcees": [["Prénom C", "Prénom D"]]
    }
