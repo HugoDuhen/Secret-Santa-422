@@ -1,4 +1,4 @@
-// Chiffrement partagé (navigateur + Node 20+) : PBKDF2-SHA256 -> AES-256-GCM
+// PBKDF2-SHA256 -> 512 bits : 128 bits d'identifiant d'entrée + 256 bits de clé AES-GCM
 const ITERATIONS = 150000;
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -18,33 +18,44 @@ export function utf8ToB64(str) {
   return bytesToB64(enc.encode(str));
 }
 
-// Les mots de passe sont insensibles à la casse et aux espaces autour
+export function randomBytes(n) {
+  return globalThis.crypto.getRandomValues(new Uint8Array(n));
+}
+
+export function toHex(bytes) {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Insensible à la casse et aux espaces autour
 export function normalizePassword(pw) {
   return String(pw || '').trim().toLowerCase();
 }
 
-async function deriveKey(password, salt, iterations) {
-  const base = await subtle.importKey('raw', enc.encode(normalizePassword(password)), 'PBKDF2', false, ['deriveKey']);
-  return subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
-    base,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt']
-  );
+export async function derive(password, saltB64, iterations = ITERATIONS) {
+  const base = await subtle.importKey('raw', enc.encode(normalizePassword(password)), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await subtle.deriveBits(
+    { name: 'PBKDF2', salt: b64ToBytes(saltB64), iterations, hash: 'SHA-256' }, base, 512));
+  const key = await subtle.importKey('raw', bits.slice(32), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+  return { id: toHex(bits.slice(0, 16)), key };
 }
 
-export async function encryptJSON(obj, password) {
-  const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
-  const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveKey(password, salt, ITERATIONS);
+export async function seal(obj, key) {
+  const iv = randomBytes(12);
   const ct = await subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(obj)));
-  return { salt: bytesToB64(salt), iv: bytesToB64(iv), iter: ITERATIONS, ct: bytesToB64(new Uint8Array(ct)) };
+  return { iv: bytesToB64(iv), ct: bytesToB64(new Uint8Array(ct)) };
 }
 
-// Lève une erreur si le mot de passe est faux
-export async function decryptJSON(blob, password) {
-  const key = await deriveKey(password, b64ToBytes(blob.salt), blob.iter || ITERATIONS);
-  const pt = await subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(blob.iv) }, key, b64ToBytes(blob.ct));
+export async function unseal(entry, key) {
+  const pt = await subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(entry.iv) }, key, b64ToBytes(entry.ct));
   return JSON.parse(dec.decode(pt));
 }
+
+// Renvoie le contenu déchiffré correspondant au mot de passe, ou null
+export async function open(data, password) {
+  const { id, key } = await derive(password, data.salt, data.iter || ITERATIONS);
+  const entry = data.e[id];
+  if (!entry) return null;
+  try { return await unseal(entry, key); } catch { return null; }
+}
+
+export { ITERATIONS };
