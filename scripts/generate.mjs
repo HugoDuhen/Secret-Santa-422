@@ -34,6 +34,7 @@ for (const [a, b, sensUnique] of r.exclusions || []) {
 }
 const rules = {
   noReciprocal: r.pasDeReciprocite !== false,
+  singleCycle: r.uneSeuleBoucle !== false,
   exclusions,
   forced: (r.pairesForcees || []).map(([a, b]) => [idByName(a), idByName(b)]),
 };

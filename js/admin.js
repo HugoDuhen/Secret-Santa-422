@@ -137,6 +137,7 @@ function fillPersonSelect(sel) {
 
 function renderRules() {
   $('no-recip').checked = !!state.rules.noReciprocal;
+  $('single-cycle').checked = !!state.rules.singleCycle;
   ['forced-a', 'forced-b', 'excl-a', 'excl-b'].forEach((id) => fillPersonSelect($(id)));
 
   const fl = $('forced-list');
@@ -155,6 +156,7 @@ function renderRules() {
 }
 
 $('no-recip').addEventListener('change', (e) => { state.rules.noReciprocal = e.target.checked; markDirty(); renderDraw(); });
+$('single-cycle').addEventListener('change', (e) => { state.rules.singleCycle = e.target.checked; markDirty(); renderDraw(); });
 
 $('add-forced').addEventListener('click', () => {
   const a = $('forced-a').value, b = $('forced-b').value;
